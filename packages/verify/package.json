@@ -1,6 +1,6 @@
 {
   "name": "finguard-verify",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Offline verifier for FinGuard evidence packs (Evidence Pack Spec v1). Recomputes every SHA-256, checks the canonical pack hash, verifies Ed25519 signatures. No network access, no vendor callback.",
   "license": "MIT",
   "type": "module",
