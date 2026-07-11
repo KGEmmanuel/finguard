@@ -93,8 +93,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Cognita FinGuard v2.0 — Financial AI Governance & Enforcement" },
       { name: "twitter:description", content: "Tiered governance mesh for financial AI: multi-source discovery, probabilistic guardrails, and continuously updated audit defensibility." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5f13947-7281-4ae7-b80f-8f3a6afc7f75/id-preview-f3381b57--c5a1d293-44e3-417c-b7fc-8fa50a6da3e8.lovable.app-1783389549542.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5f13947-7281-4ae7-b80f-8f3a6afc7f75/id-preview-f3381b57--c5a1d293-44e3-417c-b7fc-8fa50a6da3e8.lovable.app-1783389549542.png" },
+      { property: "og:image", content: "https://finguard.cognitagrc.io/cognita-custodian.png" },
+      { name: "twitter:image", content: "https://finguard.cognitagrc.io/cognita-custodian.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
