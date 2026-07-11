@@ -19,6 +19,19 @@ import "@fontsource/instrument-serif/400-italic.css";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+
+// finguard.cognitagrc.io is the canonical host. The legacy Lovable preview
+// domain 301s here so old links (lead magnet v1, early shares) keep working.
+if (
+  typeof window !== "undefined" &&
+  window.location.hostname === "finguards.lovable.app"
+) {
+  window.location.replace(
+    "https://finguard.cognitagrc.io" +
+      window.location.pathname +
+      window.location.search,
+  );
+}
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useCurrentUser } from "@/lib/queries";

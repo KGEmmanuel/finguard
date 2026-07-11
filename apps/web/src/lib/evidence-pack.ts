@@ -1,8 +1,19 @@
 import JSZip from "jszip";
 import jsPDF from "jspdf";
+import {
+  buildManifest,
+  computePackHash,
+  fileEntries,
+  serializeManifest,
+  verifyPack,
+  PACK_SPEC_VERSION,
+  type Manifest,
+  type Producer,
+} from "@finguard/pack-spec";
 
 import { supabase } from "@/integrations/supabase/client";
 import { actorLabel, sha256Hex } from "@/lib/audit";
+import { SPEC_MD, UPGRADE_MD, VERIFY_MD } from "@/lib/pack-docs";
 import { defensibilityDims } from "@/lib/mock-data";
 import { downloadBlob, toCsv } from "@/lib/csv";
 import {
@@ -107,6 +118,14 @@ function formatUtc(iso: string): string {
 export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
   const started = performance.now();
   const requestedAtIso = new Date().toISOString();
+  // Spec v1: every pack derives from one input snapshot. Same snapshot +
+  // same spec version + same producer ⇒ identical pack_hash (Spec §3).
+  const snapshotId = crypto.randomUUID();
+  const producer: Producer = {
+    user_id: user.userId,
+    display_name: actorLabel(user),
+    role: user.role as Producer["role"],
+  };
 
   // 1. Chain-of-custody: "requested"
   const requestHash = await sha256Hex(
@@ -206,7 +225,9 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
         unmanaged,
         events: events.length,
         overrides: withJust,
-        vault_entries: vault.length + 1, // +1 for the "generated" entry appended below
+        // Spec v1 §5: the vault CSV contains only entries committed at or
+        // before hashing — never a predicted row for this pack itself.
+        vault_entries: vault.length,
       },
     },
     null,
@@ -228,9 +249,6 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
     ],
   );
 
-  // Snapshot audit_vault WITH the pending "generated" entry so the CSV inside
-  // the pack contains its own custody row. We predict its hash (packHash) and
-  // insert it into the vault array before serializing.
   const defensibilityJson = JSON.stringify(
     {
       score,
@@ -248,78 +266,50 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
     2,
   );
 
-  // Files pushed in canonical order. PDF is appended last with a placeholder
-  // and later overwritten with the real bytes.
-  const dataFiles: Array<{ name: string; bytes: Uint8Array }> = [
-    { name: "01_summary.json", bytes: encoder.encode(summaryJson) },
-    {
-      name: "02_agents.csv",
-      bytes: encoder.encode(toCsv(agents as unknown as Record<string, unknown>[])),
-    },
-    {
-      name: "03_guardrail_events.csv",
-      bytes: encoder.encode(toCsv(events as unknown as Record<string, unknown>[])),
-    },
-    { name: "04_overrides.csv", bytes: encoder.encode(overridesCsv) },
-    // 05_audit_vault.csv is written AFTER we compute packHash so the row for
-    // the "generated" vault entry can be included in the CSV.
-    { name: "06_defensibility.json", bytes: encoder.encode(defensibilityJson) },
-  ];
-
-  // Partial manifest (data files only, minus the pending vault CSV).
-  // pack_hash is derived from the sorted data-file manifest + core metadata,
-  // NOT from the PDF, so we can embed pack_hash INSIDE the PDF.
-  const partialSha: Record<string, string> = {};
-  for (const f of dataFiles) partialSha[f.name] = await hashBytes(f.bytes);
-
-  // Provisional pack hash from data files so we can build the vault CSV and
-  // the PDF with the real values. Final pack_hash is computed after the vault
-  // CSV is finalized (which itself contains this hash).
-  const provisionalHash = await sha256Hex(
-    JSON.stringify({
-      provisional: true,
-      files: Object.entries(partialSha).sort(([a], [b]) => a.localeCompare(b)),
-      generated_at: stampIso,
-      produced_by: user.userId,
-    }),
+  // Spec v1 §5: the vault CSV snapshots entries committed AT OR BEFORE this
+  // point — the "requested" entry is in (inserted above), this pack's own
+  // "generated" entry is NOT (it is committed after hashing, and referenced
+  // from MANIFEST.vault_entry_id instead). No placeholder rows, ever.
+  const vaultCsvBytes = encoder.encode(
+    toCsv(
+      vault.map((v) => ({
+        id: v.id,
+        hash: v.hash,
+        kind: v.kind,
+        ref: v.ref,
+        actor: v.actor_display_name,
+        created_at: v.created_at,
+      })),
+    ),
   );
-  const packHash = provisionalHash;
 
-  // Now serialize the vault CSV, appending the pending "generated" row so the
-  // pack references its own custody entry.
-  const vaultWithGenerated = [
-    {
-      id: "(pending insert)",
-      hash: packHash,
-      kind: "Mock exam evidence pack",
-      ref: filename,
-      actor: actorLabel(user),
-      created_at: stampIso,
-    },
-    ...vault.map((v) => ({
-      id: v.id,
-      hash: v.hash,
-      kind: v.kind,
-      ref: v.ref,
-      actor: v.actor_display_name,
-      created_at: v.created_at,
-    })),
-  ];
-  const vaultCsvBytes = encoder.encode(toCsv(vaultWithGenerated));
-  const vaultCsvSha = await hashBytes(vaultCsvBytes);
-  partialSha["05_audit_vault.csv"] = vaultCsvSha;
+  // All six data files are attested (Spec §2) — including the vault CSV,
+  // which no longer references the pack itself, so there is no cycle.
+  const attestedFiles = new Map<string, Uint8Array>([
+    ["01_summary.json", encoder.encode(summaryJson)],
+    ["02_agents.csv", encoder.encode(toCsv(agents as unknown as Record<string, unknown>[]))],
+    ["03_guardrail_events.csv", encoder.encode(toCsv(events as unknown as Record<string, unknown>[]))],
+    ["04_overrides.csv", encoder.encode(overridesCsv)],
+    ["05_audit_vault.csv", vaultCsvBytes],
+    ["06_defensibility.json", encoder.encode(defensibilityJson)],
+  ]);
+  const dataFiles = [...attestedFiles.entries()].map(([name, bytes]) => ({ name, bytes }));
+
+  // Canonical, content-only pack hash (Spec §3): no timestamps in the
+  // preimage — same snapshot + same producer ⇒ byte-identical hash.
+  const attestedEntries = await fileEntries(attestedFiles);
+  const packHash = await computePackHash({
+    pack_spec_version: PACK_SPEC_VERSION,
+    snapshot_id: snapshotId,
+    producer,
+    attested_files: attestedEntries,
+  });
 
   // Manifest table used INSIDE the PDF — sorted by canonical filename order.
   const manifestForPdf = [
     { name: "00_cover.pdf", note: "(this file)" },
-    ...dataFiles.map((f) => ({
-      name: f.name,
-      sha: partialSha[f.name],
-      bytes: f.bytes.byteLength,
-    })),
-    { name: "05_audit_vault.csv", sha: vaultCsvSha, bytes: vaultCsvBytes.byteLength },
-  ]
-    .sort((a, b) => a.name.localeCompare(b.name));
+    ...attestedEntries.map((f) => ({ name: f.name, sha: f.sha256, bytes: f.bytes })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   // --- Build multi-section PDF -----------------------------------------------
   const pdf = new jsPDF({ unit: "pt", format: "letter" });
@@ -348,10 +338,10 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
   pdf.setFontSize(9);
   pdf.setTextColor(148, 163, 184);
   pdf.text(`Produced ${stampHuman}`, 40, 140);
-  pdf.text(`Signed by ${producedByLine}`, 40, 155);
-  pdf.text(`Pack hash ${packHash.slice(0, 24)}…`, 40, 170);
+  pdf.text(`Produced by ${producedByLine} — unsigned demo pack`, 40, 155);
+  pdf.text(`Pack hash ${packHash.slice(0, 24)}… (Spec v${PACK_SPEC_VERSION})`, 40, 170);
   pdf.text(
-    "Free demo pack — production packs are signed at app.cognitagrc.io",
+    "Verify offline: npx finguard-verify <this-zip> · Ed25519-signed packs at app.cognitagrc.io",
     40,
     185,
   );
@@ -373,7 +363,7 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   const attest = pdf.splitTextToSize(
-    "This evidence pack was assembled from tamper-evident logs stored in the Cognita FinGuard immutable audit vault. Every override, block, and telemetry alert referenced herein is bound by SHA-256 hash to its source record. Chain of custody — request, generation, and each download — is recorded as an append-only vault entry. The MANIFEST.json inside this ZIP lists the SHA-256 of every enclosed file and can be re-verified in-app by any authenticated user.",
+    "This evidence pack was assembled from tamper-evident logs stored in the Cognita FinGuard append-only audit vault. Every override, block, and telemetry alert referenced herein is bound by SHA-256 hash to its source record. Chain of custody — request, generation, and each download — is recorded as an append-only vault entry; this pack's generation was committed to the vault before it was offered for download (MANIFEST vault_entry_id). The MANIFEST.json inside this ZIP conforms to Evidence Pack Spec v1 and can be re-verified fully offline by anyone with the MIT-licensed finguard-verify CLI — no vendor callback.",
     pw - 120,
   );
   pdf.text(attest, 56, c.y + 38);
@@ -510,10 +500,10 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
     pdf,
     c,
     ["When", "Kind", "Actor", "Hash"],
-    vaultWithGenerated.slice(0, 20).map((v) => [
+    vault.slice(0, 20).map((v) => [
       formatUtc(v.created_at),
       v.kind,
-      v.actor ?? "—",
+      v.actor_display_name ?? "—",
       v.hash.slice(0, 12),
     ]),
     [130, 170, 130, 62],
@@ -538,43 +528,12 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
   const pdfArrayBuffer = pdf.output("arraybuffer");
   const pdfBytes = new Uint8Array(pdfArrayBuffer);
 
-  // --- Assemble the final file list -----------------------------------------
-  const files: Array<{ name: string; bytes: Uint8Array }> = [
-    { name: "00_cover.pdf", bytes: pdfBytes },
-    ...dataFiles,
-    { name: "05_audit_vault.csv", bytes: vaultCsvBytes },
-  ];
-
-  const manifest: ManifestEntry[] = [];
-  for (const f of files) {
-    manifest.push({ name: f.name, sha256: await hashBytes(f.bytes), bytes: f.bytes.byteLength });
-  }
-
-  const manifestJson = JSON.stringify(
-    {
-      pack_hash: packHash,
-      pack_hash_scope: "data-files-only",
-      pack_hash_algorithm:
-        "sha256(JSON.stringify({provisional:true, files:sortedEntries(dataFileShas), generated_at, produced_by}))",
-      generated_at: stampIso,
-      requested_at: requestedAtIso,
-      produced_by: user.userId,
-      files: manifest,
-    },
-    null,
-    2,
-  );
-  const manifestBytes = encoder.encode(manifestJson);
-  const manifestSha = await hashBytes(manifestBytes);
-
-  const zip = new JSZip();
-  for (const f of files) zip.file(f.name, f.bytes);
-  zip.file("MANIFEST.json", manifestBytes);
-
-  const zipBlob = await zip.generateAsync({ type: "blob" });
+  // --- TWO-PHASE CUSTODY (Spec v1 §5) ----------------------------------------
+  // Phase 1: pack_hash is final (computed from attested bytes above). Commit
+  // the exam row and the "generated" vault entry BEFORE the pack becomes
+  // downloadable, and reference the committed vault id from the MANIFEST.
   const generationMs = Math.round(performance.now() - started);
 
-  // Persist mock_exams row with full custody metadata
   const { data: examRow, error: examErr } = await supabase
     .from("mock_exams")
     .insert({
@@ -589,32 +548,82 @@ export async function runMockExam(user: CurrentUser): Promise<ExamResult> {
       requested_at: requestedAtIso,
       generation_ms: generationMs,
       filename,
-      manifest: JSON.parse(
-        JSON.stringify({ files: manifest, manifest_sha256: manifestSha }),
-      ),
     })
     .select("id")
     .single();
   if (examErr) throw examErr;
 
-  // Vault entry: "generated" — using the same hash that's inside the pack.
-  await supabase.from("audit_vault").insert({
-    hash: packHash,
-    kind: "Mock exam evidence pack",
-    ref: filename,
-    actor_id: user.userId,
-    actor_display_name: actorLabel(user),
-    payload: {
-      exam_id: examRow.id,
-      request_hash: requestHash,
-      generation_ms: generationMs,
-      manifest_sha256: manifestSha,
-      score,
-      hours: Number(hoursDisplay),
-      counts: { agents: agents.length, events: events.length, overrides: withJust },
-    },
-  });
+  const { data: vaultRow, error: vaultErr } = await supabase
+    .from("audit_vault")
+    .insert({
+      hash: packHash,
+      kind: "Mock exam evidence pack",
+      ref: filename,
+      actor_id: user.userId,
+      actor_display_name: actorLabel(user),
+      payload: {
+        exam_id: examRow.id,
+        request_hash: requestHash,
+        generation_ms: generationMs,
+        snapshot_id: snapshotId,
+        pack_spec_version: PACK_SPEC_VERSION,
+        score,
+        hours: Number(hoursDisplay),
+        counts: { agents: agents.length, events: events.length, overrides: withJust },
+      },
+    })
+    .select("id")
+    .single();
+  if (vaultErr) throw vaultErr;
 
+  // Phase 2: build the Spec v1 MANIFEST referencing the committed vault entry.
+  // The cover PDF is informational — jsPDF output is not byte-deterministic,
+  // so it is listed + hashed but sits outside the pack_hash preimage (Spec §4).
+  const specManifest: Manifest = await buildManifest({
+    generator: { name: "finguard", version: "2.1.0" },
+    snapshot_id: snapshotId,
+    producer,
+    generated_at: stampIso,
+    requested_at: requestedAtIso,
+    attestedFiles: attestedFiles,
+    informationalFiles: new Map([["00_cover.pdf", pdfBytes]]),
+    vault_entry_id: vaultRow.id,
+  });
+  if (specManifest.pack_hash !== packHash) {
+    throw new Error("pack_hash drift between custody phases — refusing to build");
+  }
+  const manifestBytes = encoder.encode(serializeManifest(specManifest));
+  const manifestSha = await hashBytes(manifestBytes);
+
+  const manifest: ManifestEntry[] = [
+    ...specManifest.attested_files,
+    ...specManifest.informational_files,
+  ].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Record the manifest on the exam row (non-fatal if it lags).
+  await supabase
+    .from("mock_exams")
+    .update({
+      manifest: JSON.parse(
+        JSON.stringify({
+          files: manifest,
+          manifest_sha256: manifestSha,
+          vault_entry_id: vaultRow.id,
+          pack_spec_version: PACK_SPEC_VERSION,
+        }),
+      ),
+    })
+    .eq("id", examRow.id);
+
+  const zip = new JSZip();
+  zip.file("MANIFEST.json", manifestBytes);
+  zip.file("VERIFY.md", encoder.encode(VERIFY_MD));
+  zip.file("SPEC.md", encoder.encode(SPEC_MD));
+  zip.file("UPGRADE.md", encoder.encode(UPGRADE_MD));
+  zip.file("00_cover.pdf", pdfBytes);
+  for (const f of dataFiles) zip.file(f.name, f.bytes);
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
 
   return {
     examId: examRow.id,
@@ -719,15 +728,16 @@ export async function verifyEvidencePack(file: File | Blob): Promise<VerifyResul
   checks.push({ label: "MANIFEST.json present", ok: true });
 
   const manifestText = await manifestFile.async("string");
-  let manifestJson: {
+  let parsedManifest: {
+    pack_spec_version?: string;
     pack_hash: string;
     generated_at: string;
     requested_at?: string;
-    produced_by: string;
-    files: ManifestEntry[];
+    produced_by?: string;
+    files?: ManifestEntry[];
   };
   try {
-    manifestJson = JSON.parse(manifestText);
+    parsedManifest = JSON.parse(manifestText);
   } catch {
     return {
       ok: false,
@@ -736,48 +746,89 @@ export async function verifyEvidencePack(file: File | Blob): Promise<VerifyResul
   }
   checks.push({ label: "MANIFEST.json parseable", ok: true });
 
-  // Per-file hash check
-  let filesOk = true;
-  const mismatched: string[] = [];
-  for (const entry of manifestJson.files) {
-    const zf = zip.file(entry.name);
-    if (!zf) {
-      filesOk = false;
-      mismatched.push(`${entry.name} (missing)`);
-      continue;
+  if (parsedManifest.pack_spec_version) {
+    // Spec v1 pack — verify with the exact same module the finguard-verify
+    // CLI is built from (@finguard/pack-spec), so in-app and offline
+    // verification can never disagree.
+    const filesMap = new Map<string, Uint8Array>();
+    for (const [name, zf] of Object.entries(zip.files)) {
+      if (!zf.dir) filesMap.set(name.split("/").pop()!, await zf.async("uint8array"));
     }
-    const bytes = await zf.async("uint8array");
-    const actual = await hashBytes(bytes);
-    if (actual !== entry.sha256) {
-      filesOk = false;
-      mismatched.push(`${entry.name} (hash mismatch)`);
+    const report = await verifyPack(filesMap);
+    checks.push({
+      label: `Evidence Pack Spec v${report.spec_version} supported`,
+      ok: report.spec_supported,
+    });
+    const badFiles = report.files.filter((f) => !f.ok);
+    checks.push({
+      label: `Per-file SHA-256 matches (${report.files.length} files)`,
+      ok: badFiles.length === 0,
+      detail: badFiles.length
+        ? badFiles.map((f) => `${f.name}${f.present ? " (hash mismatch)" : " (missing)"}`).join(", ")
+        : undefined,
+    });
+    checks.push({
+      label: "Canonical pack hash consistent (Spec §3)",
+      ok: report.pack_hash_ok,
+      detail: report.pack_hash_ok
+        ? undefined
+        : `Manifest says ${report.expected_pack_hash.slice(0, 12)}…, recomputed ${report.computed_pack_hash.slice(0, 12)}…`,
+    });
+    checks.push({
+      label: "Signature",
+      ok: report.signature !== "signed-invalid",
+      detail:
+        report.signature === "unsigned-demo"
+          ? "ABSENT — unsigned demo pack (production packs are Ed25519-signed)"
+          : report.signature,
+    });
+  } else {
+    // Legacy (pre-Spec v1) pack — original data-files-only formula, kept so
+    // historical packs remain verifiable.
+    let filesOk = true;
+    const mismatched: string[] = [];
+    for (const entry of parsedManifest.files ?? []) {
+      const zf = zip.file(entry.name);
+      if (!zf) {
+        filesOk = false;
+        mismatched.push(`${entry.name} (missing)`);
+        continue;
+      }
+      const bytes = await zf.async("uint8array");
+      const actual = await hashBytes(bytes);
+      if (actual !== entry.sha256) {
+        filesOk = false;
+        mismatched.push(`${entry.name} (hash mismatch)`);
+      }
     }
-  }
-  checks.push({
-    label: `Per-file SHA-256 matches (${manifestJson.files.length} files)`,
-    ok: filesOk,
-    detail: filesOk ? undefined : mismatched.join(", "),
-  });
+    checks.push({
+      label: `Per-file SHA-256 matches (${(parsedManifest.files ?? []).length} files)`,
+      ok: filesOk,
+      detail: filesOk ? undefined : mismatched.join(", "),
+    });
 
-  // Pack hash recomputation — mirrors the "data-files-only" formula used at
-  // build time. The PDF is excluded so pack_hash can be embedded inside it.
-  const dataFiles = manifestJson.files.filter((f) => f.name !== "00_cover.pdf");
-  const recomputed = await sha256Hex(
-    JSON.stringify({
-      provisional: true,
-      files: dataFiles
-        .map((f) => [f.name, f.sha256] as const)
-        .sort(([a], [b]) => a.localeCompare(b)),
-      generated_at: manifestJson.generated_at,
-      produced_by: manifestJson.produced_by,
-    }),
-  );
-  const packHashOk = recomputed === manifestJson.pack_hash;
-  checks.push({
-    label: "Pack hash consistent with manifest",
-    ok: packHashOk,
-    detail: packHashOk ? undefined : `Manifest says ${manifestJson.pack_hash.slice(0, 12)}…, recomputed ${recomputed.slice(0, 12)}…`,
-  });
+    const legacyDataFiles = (parsedManifest.files ?? []).filter((f) => f.name !== "00_cover.pdf");
+    const recomputed = await sha256Hex(
+      JSON.stringify({
+        provisional: true,
+        files: legacyDataFiles
+          .map((f) => [f.name, f.sha256] as const)
+          .sort(([a], [b]) => a.localeCompare(b)),
+        generated_at: parsedManifest.generated_at,
+        produced_by: parsedManifest.produced_by,
+      }),
+    );
+    const packHashOk = recomputed === parsedManifest.pack_hash;
+    checks.push({
+      label: "Pack hash consistent with manifest (legacy format)",
+      ok: packHashOk,
+      detail: packHashOk
+        ? undefined
+        : `Manifest says ${parsedManifest.pack_hash.slice(0, 12)}…, recomputed ${recomputed.slice(0, 12)}…`,
+    });
+  }
+
+  const manifestJson = parsedManifest;
 
   // Vault lookup
   const { data: vaultEntry } = await supabase
