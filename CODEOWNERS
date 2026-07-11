@@ -1,0 +1,6 @@
+# Spec + hashing changes require the maintainer — the builder and every
+# deployed verifier must stay in agreement (CONTRIBUTING.md rule 3).
+* @KGEmmanuel
+/packages/pack-spec/ @KGEmmanuel
+/docs/spec/ @KGEmmanuel
+/fixtures/golden-pack/ @KGEmmanuel

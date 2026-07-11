@@ -1,0 +1,10 @@
+id,name,owner,department,tier,source,model,status,discovered_at,calls_per_day,reg_tags,created_at
+"AGT-0041","Meridian FX Alpha","K. Nakamura","Global Markets — FX Desk","1","Endpoint Agent","Proprietary RL / C++","monitoring","2026-05-14","18.4M","SEC 15c3-5; MiFID II RTS 6","2026-07-06T13:43:24Z"
+"AGT-0042","Halcyon Equities Executor","R. Okafor","Equities — Program Trading","1","MLOps/CI-CD","XGBoost + Rust exec","monitoring","2026-05-22","9.1M","SEC 15c3-5","2026-07-06T13:43:24Z"
+"AGT-0117","Cavendish Wealth Advisor","S. Duval","Private Wealth","2","Network Gateway","gpt-4.1 (Azure)","governed","2026-04-02","14220","FINRA 2210; Reg BI","2026-07-06T13:43:24Z"
+"AGT-0118","Portfolio Rationale Synthesizer","M. Ibarra","Research — Cross Asset","2","Network Gateway","claude-sonnet (Bedrock)","governed","2026-04-15","8930","SEC 10b5-1; FINRA 2241","2026-07-06T13:43:24Z"
+"AGT-0163","KYC Adjudication Copilot","T. Osei","Financial Crime — Onboarding","1","MLOps/CI-CD","Gradient-boosted ensemble","governed","2026-03-08","61200","BSA/AML; FinCEN CDD","2026-07-06T13:43:24Z"
+"AGT-0190","Trade Surveillance Triage","J. Lindqvist","Compliance — Surveillance","1","Endpoint Agent","Rules + LLM triage","governed","2026-02-27","112000","FINRA 3110; SEC 17a-4","2026-07-06T13:43:24Z"
+"AGT-0210","HR Policy Q&A Bot","L. Petrov","Human Resources","3","SaaS Connector","gpt-4o-mini","governed","2026-05-30","640","Internal HR-POL-3.2","2026-07-06T13:43:24Z"
+"AGT-0233","Client Email Summarizer","A. Fontaine","Operations — Client Service","3","SaaS Connector","gemini-flash","governed","2026-06-04","3410","FINRA 2210(d)","2026-07-06T13:43:24Z"
+"AGT-0246","Credit Memo Drafter","(unassigned)","Corporate Banking — Credit","2","BI Tool Plugin","gpt-4.1 (Azure)","unmanaged","2026-07-01","270","SR 11-7 (provisional)","2026-07-06T13:43:24Z"

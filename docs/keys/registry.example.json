@@ -1,0 +1,12 @@
+{
+  "$comment": "Key registry format (Evidence Pack Spec v1 §7). The production registry is published at https://app.cognitagrc.io/finguard/keys — pin a snapshot for air-gapped verification. Generate test keys with: pnpm tsx scripts/keygen.ts <key_id>",
+  "keys": [
+    {
+      "key_id": "cognita-prod-2026",
+      "alg": "ed25519",
+      "public_key": "<base64 or hex raw 32-byte Ed25519 public key>",
+      "valid_from": "2026-08-01T00:00:00Z",
+      "revoked_at": null
+    }
+  ]
+}

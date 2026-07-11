@@ -1,0 +1,22 @@
+name: Rule pack / regulator mapping
+description: Propose a new guardrail rule or statute mapping (great first contribution)
+labels: [rule-pack, good first issue]
+body:
+  - type: input
+    id: regulator
+    attributes:
+      label: Regulator / framework
+      placeholder: SEC, FINRA, FCA, MAS, EU AI Act, NIST AI RMF…
+    validations: { required: true }
+  - type: input
+    id: statute
+    attributes:
+      label: Statute / rule reference
+      placeholder: e.g. SEC 17a-4, FINRA 2210(d), EU AI Act Annex III
+    validations: { required: true }
+  - type: textarea
+    id: rule
+    attributes:
+      label: Proposed guardrail rule
+      description: What signal triggers it, what action (soft_flag / hard_block / silent_log), and why an examiner cares.
+    validations: { required: true }

@@ -1,0 +1,53 @@
+{
+  "pack_spec_version": "1.0",
+  "generator": {
+    "name": "finguard",
+    "version": "2.1.0"
+  },
+  "snapshot_id": "0a3c9c1e-6c1a-4d2b-9f61-2f8f4b1d7e42",
+  "producer": {
+    "user_id": "f7597336-ff0e-4517-b8ee-bd0c4150c651",
+    "display_name": "Demo CISO",
+    "role": "ciso"
+  },
+  "generated_at": "2026-07-06T13:45:00.000Z",
+  "requested_at": "2026-07-06T13:44:58.000Z",
+  "attested_files": [
+    {
+      "name": "01_summary.json",
+      "sha256": "0fa9d61e858b1c2129218463a3cddbeb467bd1105037d3b39d53889821585b98",
+      "bytes": 415
+    },
+    {
+      "name": "02_agents.csv",
+      "sha256": "3084c4df9378069dccdf1a87515e3ffb21149cb58ef1317d7ce3ecc14b73ab12",
+      "bytes": 1852
+    },
+    {
+      "name": "03_guardrail_events.csv",
+      "sha256": "9e2f2d65b7edcc5843c2c4e8f368ba003557b592d0597f51419fb0a5973f048e",
+      "bytes": 1725
+    },
+    {
+      "name": "04_overrides.csv",
+      "sha256": "62959a8a01f41f4838d8efa17b63014a4a51ab61765390ccb4e5be0a5abe6d55",
+      "bytes": 403
+    },
+    {
+      "name": "05_audit_vault.csv",
+      "sha256": "c33361e29753e6c1df06d7d3d5987cf9d1bb98ec16b74b247e930854aa247364",
+      "bytes": 1047
+    },
+    {
+      "name": "06_defensibility.json",
+      "sha256": "965cc4ae2ea801e6f27bcd9b95f9e930218014fe718f6d72abfbcb201f5f0a35",
+      "bytes": 1912
+    }
+  ],
+  "informational_files": [],
+  "pack_hash": "26328421247f94b1ddc20d9705e84c6b9b9f74bedf45881459b246dbbc7b2c28",
+  "signature": null,
+  "signature_status": "unsigned-demo",
+  "key_id": null,
+  "vault_entry_id": "9d2f4a11-3b7e-4c8a-a1f0-5e6d7c8b9a01"
+}

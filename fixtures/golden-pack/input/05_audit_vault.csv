@@ -1,0 +1,6 @@
+id,hash,kind,ref,actor,created_at
+"7457a3ee-0e1a-4c5f-b7bc-f55e02bc3453","ff48b97ba2343fcd0bb1107b37a92b81bc73545ccf824ae63813ef91adc65369","mock_exam_requested","snapshot 0a3c9c1e-6c1a-4d2b-9f61-2f8f4b1d7e42","Demo CISO","2026-07-06T13:44:58Z"
+"5c1d9e2f-7a3b-4c8d-9e0f-1a2b3c4d5e6f","c9a1e4d7b02f68a35c1e9d4b7f20a685d3c1b9e7f4a20d685c3b1a9e7d4f20a6","override_signed","OVR-1042 / EVT-88213","S. Duval","2026-07-06T11:02:17Z"
+"3b8a1c5d-2e9f-4a7b-8c1d-0e5f6a9b2c3d","81d4f2a9c7e30b685a1d9f4c2e7b0a685d3f1c9b7e4a2d085c6b3a1f9e7d4c20","agent_registered","AGT-0246 (unmanaged, pending owner)","Discovery Scanner","2026-07-01T04:12:09Z"
+"6e2f8b4a-9c1d-4e7f-a3b5-8d0c1e9f2a4b","2c7e9a4d1f80b685c3a1d9e7f4b20a685d1c3b9f7e4a2d085c6b3a1e9f7d4c20","pack_generated","finguard-evidence-2026-06-28 (prior mock exam)","Demo CISO","2026-06-28T16:40:31Z"
+"1f9c3e7a-5b2d-4f8c-9a1e-3d6b0c8f2e5a","d085c6b3a1e9f7d4c202c7e9a4d1f80b685c3a1d9e7f4b20a685d1c3b9f7e4a2","pack_downloaded","finguard-evidence-2026-06-28 (prior mock exam)","Demo CISO","2026-06-28T16:41:05Z"

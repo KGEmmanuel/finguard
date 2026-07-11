@@ -1,0 +1,18 @@
+{
+  "name": "@finguard/pack-spec",
+  "version": "1.0.0",
+  "description": "Canonical types, hashing, and verification core for the FinGuard Evidence Pack Spec v1 — isomorphic (browser + Node), zero dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "repository": { "type": "git", "url": "https://github.com/KGEmmanuel/finguard", "directory": "packages/pack-spec" },
+  "keywords": ["ai-governance", "evidence", "audit", "sha256", "ed25519", "regtech"]
+}

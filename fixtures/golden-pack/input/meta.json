@@ -1,0 +1,12 @@
+{
+  "snapshot_id": "0a3c9c1e-6c1a-4d2b-9f61-2f8f4b1d7e42",
+  "producer": {
+    "user_id": "f7597336-ff0e-4517-b8ee-bd0c4150c651",
+    "display_name": "Demo CISO",
+    "role": "ciso"
+  },
+  "generated_at": "2026-07-06T13:45:00.000Z",
+  "requested_at": "2026-07-06T13:44:58.000Z",
+  "vault_entry_id": "9d2f4a11-3b7e-4c8a-a1f0-5e6d7c8b9a01",
+  "generator": { "name": "finguard", "version": "2.1.0" }
+}

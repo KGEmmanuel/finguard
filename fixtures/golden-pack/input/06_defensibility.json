@@ -1,0 +1,52 @@
+{
+  "score": 85,
+  "formula": "weighted mean: chain_of_custody 0.25, override_completeness 0.20, telemetry_latency 0.15, model_card_currency 0.15, unmanaged_remediation 0.15, statute_mapping 0.10",
+  "components": {
+    "coverage_pct": 89,
+    "override_coverage_pct": 50
+  },
+  "dimensions": [
+    {
+      "key": "chain_of_custody",
+      "label": "Chain-of-custody coverage",
+      "score": 89,
+      "notes": "8/9 agents logged to vault",
+      "remediation": "Assign an owner to AGT-0246; ensure telemetry beacons emit within 24h."
+    },
+    {
+      "key": "override_completeness",
+      "label": "Tier-2 override completeness",
+      "score": 50,
+      "notes": "1/2 soft flags justified (OVR-1042 signed; EVT-88201 pending in MD queue)",
+      "remediation": "Resolve EVT-88201 within the 5-business-day SLA to reach the 95% target."
+    },
+    {
+      "key": "telemetry_latency",
+      "label": "Tier-1 telemetry latency SLA",
+      "score": 94,
+      "notes": "p99 alert latency 41ms (SLA: 50ms)",
+      "remediation": "Latency within SLA; continue quarterly stress test."
+    },
+    {
+      "key": "model_card_currency",
+      "label": "Model card currency",
+      "score": 87,
+      "notes": "3 models with cards >90d stale",
+      "remediation": "Automate model-card regeneration on any base-model or prompt change."
+    },
+    {
+      "key": "unmanaged_remediation",
+      "label": "Unmanaged agent remediation",
+      "score": 80,
+      "notes": "1 unmanaged agent pending owner assignment (AGT-0246, discovered 2026-07-01)",
+      "remediation": "Assign an accountable owner within 10 business days of discovery."
+    },
+    {
+      "key": "statute_mapping",
+      "label": "Regulator statute mapping",
+      "score": 89,
+      "notes": "Rules mapped to SEC 17a-4, FINRA 2210, SR 11-7, FinCEN CDD",
+      "remediation": "Extend mapping to include EU AI Act Annex III on next release."
+    }
+  ]
+}

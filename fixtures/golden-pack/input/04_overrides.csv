@@ -1,0 +1,2 @@
+id,event_id,user_id,user_display_name,user_role,justification,evidence_hash,created_at
+"OVR-1042","EVT-88213","b2a41c77-90de-4f1a-8a3e-6c2d9e0f1a55","S. Duval","md","Client memo required for quarter-end rebalancing; SSN was redacted at source before model call. Approved under WM-SOP-114 §3 with compliance cc.","4f1c2b9ad83e60a6f92d4c1e7b58a3d0c6e94f21b7d80a5c3e12f6094a7b8c1d","2026-07-06T11:02:17Z"

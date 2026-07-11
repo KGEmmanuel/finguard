@@ -1,0 +1,20 @@
+{
+  "snapshot_id": "0a3c9c1e-6c1a-4d2b-9f61-2f8f4b1d7e42",
+  "producer": {
+    "user_id": "f7597336-ff0e-4517-b8ee-bd0c4150c651",
+    "display_name": "Demo CISO",
+    "role": "ciso"
+  },
+  "defensibility_score": 85,
+  "estimated_response_hours": {
+    "value": 3.8,
+    "display": "3.8 hours"
+  },
+  "counts": {
+    "agents": 9,
+    "unmanaged": 1,
+    "events": 6,
+    "overrides": 1,
+    "vault_entries": 5
+  }
+}
