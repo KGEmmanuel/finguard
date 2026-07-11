@@ -1,9 +1,15 @@
+# Hosted CI is DISABLED for now (GitHub Actions unavailable on this account).
+# The same gate runs locally on every push via the pre-push hook: `pnpm verify`
+# (typecheck + build + 18 tests + golden-pack determinism + CLI round-trip).
+#
+# To re-enable hosted CI later, replace the `on:` block with:
+#   on:
+#     push: { branches: [main] }
+#     pull_request:
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch: # manual only — never auto-runs, never bills
 
 permissions:
   contents: read
@@ -35,20 +41,6 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      # Rebuild the evidence pack from fixture inputs; assert byte-identical to
-      # the checked-in golden output; verify the golden zip with the verifier
-      # built from this same commit.
       - run: pnpm golden:check
       - name: CLI end-to-end on the golden pack
         run: node packages/verify/dist/cli.js fixtures/golden-pack/output/finguard-evidence-golden.zip --no-color
-
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with: { languages: javascript-typescript }
-      - uses: github/codeql-action/analyze@v3

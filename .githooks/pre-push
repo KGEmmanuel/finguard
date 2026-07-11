@@ -1,0 +1,16 @@
+#!/bin/sh
+# FinGuard verification gate — runs on every `git push` in place of hosted CI.
+# Installed automatically by `pnpm install` (postinstall sets core.hooksPath).
+# Covers: typecheck, 18 unit tests (incl. signature paths), golden-pack
+# byte-determinism, and a CLI round-trip on the golden pack.
+
+echo "pre-push: running FinGuard verification gate (pnpm verify)..."
+pnpm verify
+status=$?
+if [ $status -ne 0 ]; then
+  echo ""
+  echo "  push blocked: the verification gate failed (exit $status)."
+  echo "  Fix the failure, or bypass in an emergency with: git push --no-verify"
+  exit $status
+fi
+echo "pre-push: gate passed."

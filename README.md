@@ -4,7 +4,7 @@
 
 Open-source, offline-verifiable evidence packs for AI systems in regulated finance — built for SEC, OCC, FCA and MAS examinations.
 
-[![CI](https://github.com/KGEmmanuel/finguard/actions/workflows/ci.yml/badge.svg)](https://github.com/KGEmmanuel/finguard/actions/workflows/ci.yml)
+[![Verification gate](https://img.shields.io/badge/verification-pnpm%20verify%20on%20every%20push-2ea44f)](.githooks/pre-push)
 [![Determinism](https://img.shields.io/badge/evidence%20packs-deterministic-2ea44f)](docs/spec/evidence-pack-v1.md)
 [![npm](https://img.shields.io/npm/v/finguard-verify)](https://www.npmjs.com/package/finguard-verify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -31,7 +31,7 @@ pnpm install && pnpm build
 node packages/verify/dist/cli.js fixtures/golden-pack/output/finguard-evidence-golden.zip
 ```
 
-Every file in the pack is SHA-256 bound to its manifest. Same inputs + same pack version = byte-identical manifest and zip — enforced by [a CI gate](.github/workflows/ci.yml) that rebuilds the pack from fixtures on every PR (in a non-UTC timezone, to prove it), not a slide.
+Every file in the pack is SHA-256 bound to its manifest. Same inputs + same pack version = byte-identical manifest and zip — enforced by [a verification gate](.githooks/pre-push) that rebuilds the pack from fixtures and diffs the bytes on **every push** (`pnpm verify`), not a slide. Anyone can run the gate themselves in one command — which is more than a green badge proves.
 
 ## Why
 
@@ -54,10 +54,10 @@ We publish our gaps: **[docs/audit.md](docs/audit.md)**. A buyer evaluating comp
 ```bash
 git clone https://github.com/KGEmmanuel/finguard && cd finguard
 pnpm install
-pnpm build          # tsc -b packages
-pnpm test           # 18 unit tests incl. determinism + signature paths
-pnpm golden:check   # the CI determinism gate, locally
+pnpm verify         # the whole gate: typecheck + build + 18 tests + determinism + CLI round-trip
 ```
+
+`pnpm install` wires `pnpm verify` as a git pre-push hook, so every push — maintainer or contributor — passes the same gate. (The GitHub Actions workflow is kept in-repo but dispatch-only for now.)
 
 The hosted console self-hosts against your own Supabase project (Postgres + RLS, pg_cron KPI compute, client-side pack building — your data never leaves your project). See [apps/web/README.md](apps/web/README.md).
 

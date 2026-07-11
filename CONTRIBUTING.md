@@ -18,7 +18,7 @@ Monorepo layout: `apps/web` (the console), `packages/pack-spec` (canonical hashi
 ## Ground rules
 
 1. **Every PR maps to exactly one outcome KPI** (A–G, see the public roadmap). Say which one in the PR description. Features that don't move a KPI get closed — kindly, but closed.
-2. **Determinism is a merge gate.** If your change alters pack bytes, regenerate the golden fixture in the same PR (`pnpm golden:update`) and explain why in the changelog entry. CI diffs bytes.
+2. **Determinism is a merge gate.** If your change alters pack bytes, regenerate the golden fixture in the same PR (`pnpm golden:update`) and explain why in the changelog entry. The gate diffs bytes: `pnpm verify` runs automatically on every `git push` (pre-push hook, installed by `pnpm install`). Hosted CI is dispatch-only for now — the local gate is authoritative.
 3. **Never touch `packages/pack-spec` hashing without a spec version bump** and an entry in `docs/spec/evidence-pack-v1.md`'s changelog. The builder and every deployed verifier must agree.
 4. **No fabricated data.** Seeded demo data must be plainly synthetic (fictional firms, masked identifiers). Anything resembling real PII fails review.
 

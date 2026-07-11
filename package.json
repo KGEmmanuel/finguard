@@ -9,7 +9,9 @@
     "test": "tsx --test packages/pack-spec/test/canonical.test.ts packages/pack-spec/test/manifest.test.ts packages/verify/test/verify.test.ts",
     "golden:update": "tsx scripts/build-golden.ts",
     "golden:check": "tsx scripts/check-golden.ts",
-    "lint": "pnpm typecheck"
+    "lint": "pnpm typecheck",
+    "verify": "pnpm typecheck && pnpm build && pnpm test && pnpm golden:check && node packages/verify/dist/cli.js fixtures/golden-pack/output/finguard-evidence-golden.zip --no-color",
+    "postinstall": "node -e \"try{require('node:child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\""
   },
   "devDependencies": {
     "@finguard/pack-spec": "workspace:*",
