@@ -13,6 +13,6 @@
   "scripts": {
     "build": "tsc -p ."
   },
-  "repository": { "type": "git", "url": "https://github.com/KGEmmanuel/finguard", "directory": "packages/pack-spec" },
+  "repository": { "type": "git", "url": "git+https://github.com/KGEmmanuel/finguard.git", "directory": "packages/pack-spec" },
   "keywords": ["ai-governance", "evidence", "audit", "sha256", "ed25519", "regtech"]
 }

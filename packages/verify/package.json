@@ -4,7 +4,7 @@
   "description": "Offline verifier for FinGuard evidence packs (Evidence Pack Spec v1). Recomputes every SHA-256, checks the canonical pack hash, verifies Ed25519 signatures. No network access, no vendor callback.",
   "license": "MIT",
   "type": "module",
-  "bin": { "finguard-verify": "./dist/cli.js" },
+  "bin": { "finguard-verify": "dist/cli.js" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist", "README.md"],
@@ -15,7 +15,7 @@
     "@finguard/pack-spec": "workspace:*",
     "fflate": "^0.8.2"
   },
-  "repository": { "type": "git", "url": "https://github.com/KGEmmanuel/finguard", "directory": "packages/verify" },
+  "repository": { "type": "git", "url": "git+https://github.com/KGEmmanuel/finguard.git", "directory": "packages/verify" },
   "keywords": ["ai-governance", "evidence-pack", "verifier", "audit", "sec", "regtech", "ed25519"],
   "engines": { "node": ">=18.17" }
 }
