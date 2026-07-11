@@ -2,4 +2,5 @@ packages:
   - packages/*
   - apps/*
 allowBuilds:
+  core-js: false # postinstall is only a funding banner — not needed
   esbuild: true

@@ -1,0 +1,14 @@
+# Route ownership by directory. The lead maintainer is the fallback
+# owner for everything; adjust as the contributor base grows.
+
+*                                @KGEmmanuel
+
+/docs/                           @KGEmmanuel
+/supabase/                       @KGEmmanuel
+/scripts/                        @KGEmmanuel
+/.github/                        @KGEmmanuel
+/src/routes/_authenticated/      @KGEmmanuel
+/src/routes/api/                 @KGEmmanuel
+/src/lib/evidence-pack.ts        @KGEmmanuel
+/SECURITY.md                     @KGEmmanuel
+/GOVERNANCE.md                   @KGEmmanuel

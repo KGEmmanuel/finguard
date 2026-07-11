@@ -1,22 +1,61 @@
-# apps/web — the FinGuard console
+# Finguard
 
-This directory receives the Lovable-scaffolded console (currently in the private `vigil-mesh` project, live at finguards.lovable.app).
+Open-source AI governance, risk & compliance (GRC) demo for financial services — the free tier of the [Cognita GRC](https://app.cognitagrc.io) platform.
 
-## Bringing the code in (one-time)
+**Repo:** https://github.com/KGEmmanuel/vigil-mesh
+**Live demo:** https://app.cognitagrc.io/finguard
+**Paid tiers:** https://app.cognitagrc.io/pricing
 
-1. In Lovable: open the project → GitHub → **Connect repository** → select `KGEmmanuel/finguard`. If Lovable requires an empty repo or its own branch, sync to a branch (e.g. `lovable-sync`) and move the app:
+Finguard gives you an inventory of AI systems, agent monitoring, policy guardrails, and an audit trail — enough to stand up lightweight AI GRC for a fintech without a commercial contract.
 
-   ```bash
-   git fetch origin lovable-sync
-   git checkout lovable-sync -- .
-   git mv src index.html vite.config.ts public apps/web/   # adjust to actual layout
-   git commit -m "chore: move Lovable console into apps/web"
-   ```
+## Features (OSS)
 
-2. Add `apps/web/package.json` name `@finguard/web` so pnpm picks it up as a workspace.
-3. Point Cloudflare Pages at the repo: build command `pnpm install && pnpm --filter @finguard/web build`, output `apps/web/dist`.
-4. After this, treat **GitHub as canonical**; use Lovable only for prototyping on branches (see docs/architecture.md, risk table in the implementation plan).
+- **Dashboard** — posture snapshot across AI systems, agents, and controls
+- **Inventory** — register and classify AI/ML systems and models
+- **Agents** — track autonomous agents, their tools and data access
+- **Guardrails** — define and monitor policy checks
+- **Audit** — evidence log with CSV / PDF export
+- **Demo mode** — mock data + a `demo@cognita.io` login, no backend required to try it
 
-## Wiring the deterministic pack builder
+## Paid tiers (Cognita GRC)
 
-Replace the console's current evidence-pack code with [`src/pack-builder.ts`](src/pack-builder.ts), which uses `@finguard/pack-spec` — the same module the CLI verifies with, so the builder and verifier can never drift. It implements Spec v1: canonical content-only pack hash, attested/informational split, and the two-phase vault commit (vault entry BEFORE download).
+Not in this repo — available on the hosted platform:
+
+- SSO / SAML, multi-tenant org switcher
+- Signed evidence packs, SIEM export
+- Curated policy packs for SOC 2, ISO 42001, EU AI Act, NIST AI RMF
+- SLA & support
+
+## Quickstart
+
+```bash
+bun install
+bun run dev
+```
+
+Open http://localhost:8080 and sign in with `demo@cognita.io` (see the auth screen) or explore `/audit` and `/guardrails` in demo mode without an account.
+
+## Stack
+
+TanStack Start (React 19) · Vite 7 · Tailwind v4 · shadcn/ui · TanStack Query · Supabase (Lovable Cloud) for auth, DB and RLS.
+
+## Architecture
+
+Prose: [docs/architecture.md](./docs/architecture.md). Diagram:
+[docs/architecture.mmd](./docs/architecture.mmd). Target two-plane
+harness (aspirational): [docs/harness.md](./docs/harness.md). Honest
+gap register: [docs/audit.md](./docs/audit.md).
+
+## Project meta
+
+[CHANGELOG](./CHANGELOG.md) · [ROADMAP](./ROADMAP.md) ·
+[GOVERNANCE](./GOVERNANCE.md) · [ADOPTERS](./ADOPTERS.md) ·
+[MAINTAINERS](./MAINTAINERS.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md). Security issues: [SECURITY.md](./SECURITY.md).
+
+## License
+
+[MIT](./LICENSE) © Cognita GRC

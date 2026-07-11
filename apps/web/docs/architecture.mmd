@@ -1,0 +1,39 @@
+flowchart LR
+  subgraph Browser["Browser (React 19 + TanStack Router)"]
+    UI[Route tree /_authenticated<br/>audit · agents · guardrails · inventory]
+    Q[TanStack Query cache]
+    PDF[evidence-pack.ts<br/>PDF + MANIFEST]
+    CTA[UpgradeCta beacon]
+  end
+
+  subgraph Edge["TanStack Start server (Cloudflare Worker)"]
+    SF[createServerFn<br/>demo.functions.ts]
+    PUB[/api/public/hooks/*<br/>compute-kpis · funnel-event/]
+  end
+
+  subgraph Cloud["Lovable Cloud (Supabase)"]
+    AUTH[(Auth · RLS)]
+    DB[(Postgres<br/>agents · guardrail_events<br/>audit_log · outcome_kpis<br/>funnel_events · user_roles)]
+    CRON[[pg_cron 02:00 UTC]]
+  end
+
+  subgraph Paid["app.cognitagrc.io (out of repo)"]
+    CTRL[Control plane<br/>signed policy packs · benchmarks]
+    SDK[finguard verify CLI<br/>Ed25519 public key]
+  end
+
+  UI -->|useSuspenseQuery| Q
+  Q -->|RLS-scoped reads| AUTH
+  AUTH --> DB
+  UI --> PDF
+  UI --> CTA
+  CTA -->|POST beacon| PUB
+  UI -->|server fn call| SF
+  SF --> AUTH
+  CRON --> PUB
+  PUB --> DB
+  CTA -.utm link.-> CTRL
+  PDF -.offline verify.-> SDK
+
+  classDef gap stroke-dasharray:4 4,stroke:#b45309;
+  class Paid,CTRL,SDK gap;

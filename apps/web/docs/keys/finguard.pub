@@ -1,0 +1,14 @@
+# Finguard evidence-pack signing key (PLACEHOLDER)
+#
+# This file will hold the Ed25519 public key that `finguard verify`
+# uses to check the detached signature shipped alongside an evidence
+# pack. The real key will be rotated on a documented schedule and its
+# fingerprint published in CHANGELOG.md for each rotation.
+#
+# Status: not implemented. See ROADMAP.md ("Ed25519 detached signature
+# on evidence packs") and docs/harness.md.
+#
+# Format (once populated):
+#   -----BEGIN PUBLIC KEY-----
+#   <base64-encoded Ed25519 SubjectPublicKeyInfo>
+#   -----END PUBLIC KEY-----
