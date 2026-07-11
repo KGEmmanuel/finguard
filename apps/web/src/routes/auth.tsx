@@ -50,7 +50,16 @@ function AuthPage() {
     setDemoBusy(true);
     const toastId = toast.loading("Provisioning demo CISO…");
     try {
-      const { email: demoEmail, password: demoPassword } = await ensureDemoUser();
+      // Provisioning needs the service-role key (server-side). On deployments
+      // without it (e.g. Cloudflare against an existing Lovable Cloud project),
+      // the demo user already exists — fall back to direct sign-in.
+      let demoEmail = DEMO_EMAIL;
+      let demoPassword = DEMO_PASSWORD;
+      try {
+        ({ email: demoEmail, password: demoPassword } = await ensureDemoUser());
+      } catch (provisionErr) {
+        console.warn("[auth] demo provisioning unavailable, signing in directly", provisionErr);
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: demoEmail,
         password: demoPassword,

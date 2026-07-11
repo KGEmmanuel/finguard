@@ -169,7 +169,7 @@ export function AppSidebar() {
 
 
             <a
-              href="https://github.com/KGEmmanuel/vigil-mesh"
+              href="https://github.com/KGEmmanuel/finguard"
               target="_blank"
               rel="noopener noreferrer"
               className="mono block text-center text-[9px] uppercase tracking-widest text-muted-foreground/70 hover:text-foreground"
